@@ -1,16 +1,24 @@
 #include <Arduino.h>
 
+#define STBY 2
+#define PWMA 5
+
 void setup() {
 
-  pinMode(2, OUTPUT);
-  pinMode(13, OUTPUT);
+  Serial.begin(9600);
+
+  pinMode(LED_BUILTIN, OUTPUT);
+
+  pinMode(STBY, OUTPUT);
   pinMode(3, OUTPUT);
   pinMode(4, OUTPUT);
-  pinMode(5, OUTPUT);
-  digitalWrite(2, HIGH);
+  pinMode(PWMA, OUTPUT);
+
+
+  digitalWrite(STBY, HIGH);
   // digitalWrite(3, HIGH);
   // digitalWrite(4, LOW);
-  // analogWrite(5, 100);
+  // analogWrite(PWMA, 100);
   // delay(1000);
   // digitalWrite(4, HIGH);
 }
@@ -19,23 +27,27 @@ void loop() {
   digitalWrite(3, HIGH);
   digitalWrite(4, LOW);
   for (int i = 0; i < 256; i++){
-    analogWrite(5, i);
+    Serial.println(analogRead(A0));
+    analogWrite(PWMA, i);
     delay(10);
   }
   delay(100);
   for (int i = 255; i >= 0; i--){
-    analogWrite(5, i);
+    Serial.println(analogRead(A0));
+    analogWrite(PWMA, i);
     delay(10);
   }
   digitalWrite(4, HIGH);
   digitalWrite(3, LOW);
   for (int i = 0; i < 256; i++){
-    analogWrite(5, i);
+    Serial.println(analogRead(A0));
+    analogWrite(PWMA, i);
     delay(10);
   }
   delay(100);
   for (int i = 255; i >= 0; i--){
-    analogWrite(5, i);
+    Serial.println(analogRead(A0));
+    analogWrite(PWMA, i);
     delay(10);
   }
   // delay(2000);
