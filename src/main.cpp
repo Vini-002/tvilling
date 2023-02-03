@@ -4,9 +4,12 @@
 #define PWMA 5
 
 int32_t setpoint = 512;
-int32_t erro;
-int32_t leitura;
+float erro;
+float leitura;
 uint8_t comando;
+float leituraa = 512;
+int soma_erro = 0, forca;
+float Kp = 3, Ki = 0.01;
 
 void setup() {
 
@@ -21,18 +24,28 @@ void setup() {
 
   analogWrite(PWMA, 180);
   digitalWrite(STBY, HIGH);
+//  Serial.setTimeout(10);
 }
 
 void loop()
 {
-  leitura = analogRead(A0);
-  erro = leitura - setpoint;
+  while (Serial.available()>0){
+    setpoint = Serial.parseInt();
+    setpoint = map(setpoint,0,180,0,1023);
 
-  if (abs(erro) < 3)
+  }
+  leitura = analogRead(A0);
+  leitura = leitura*0.2 + leituraa*0.8;
+  
+  leituraa = leitura;
+  
+  erro = leitura - setpoint;
+  soma_erro += erro;
+
+  if (abs(erro) < 5)
   {
     digitalWrite(3, HIGH);
     digitalWrite(4, HIGH);
-    // break;q
   }
   else if (erro > 0)
   {
@@ -44,15 +57,21 @@ void loop()
     digitalWrite(3, LOW);
     digitalWrite(4, HIGH);
   }
-  erro = abs(erro);
-  if (erro < (1 << 5)){
-    analogWrite(PWMA, erro << 3);
-  }
-  else
-  {
-    digitalWrite(PWMA, HIGH);
-  }
-  delay(4);
-  Serial.print(leitura);
-  Serial.print(" ");
+  
+  forca = abs(erro*Kp + soma_erro*Ki);
+  analogWrite(PWMA, forca);
+//  if (erro < (1 << 5)){
+//    analogWrite(PWMA, erro << 3);
+//  }
+//  else
+//  {
+//    digitalWrite(PWMA, HIGH);
+//  }
+  Serial.print(0);
+  Serial.print(", ");
+  Serial.print(180);
+  Serial.print(", ");
+  Serial.println((float) leitura * 180 / 1023);
+//  Serial.print(" ");
+//  Serial.println(setpoint);
 }
