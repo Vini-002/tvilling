@@ -3,75 +3,72 @@
 #define STBY 2
 #define PWMA 5
 
-int32_t setpoint = 512;
-float erro;
-float leitura;
-uint8_t comando;
-float leituraa = 512;
-int soma_erro = 0, forca;
-float Kp = 3, Ki = 0.01;
+const uint8_t pin_a = 3, pin_b = 4;
+
+int target = 512;
+int measure, estimate, prev_estimate = 512;
+
+int error, error_sum = 0, command;
+
+struct controller {float p, i, d;} K = {1, 0, 0};
+
+const int low_value = 67, high_value = 893;
+
+// This coefficient determines how much wheight the
+// filter gives to the new measure vs the previous estimate
+const float filter_k = 0.8;
+
+unsigned long now, last_update = 0;
 
 void setup() {
 
   Serial.begin(9600);
 
-  pinMode(LED_BUILTIN, OUTPUT);
-
+  // Set up the H-bridge pins 
   pinMode(STBY, OUTPUT);
-  pinMode(3, OUTPUT);
-  pinMode(4, OUTPUT);
+  pinMode(pin_a, OUTPUT);
+  pinMode(pin_b, OUTPUT);
   pinMode(PWMA, OUTPUT);
 
-  analogWrite(PWMA, 180);
   digitalWrite(STBY, HIGH);
-//  Serial.setTimeout(10);
 }
 
 void loop()
 {
-  while (Serial.available()>0){
-    setpoint = Serial.parseInt();
-    setpoint = map(setpoint,0,180,0,1023);
+  // Receives new target
+  while (Serial.available()) {
+    Serial.readBytes((char *) &target, 2);
+    target = map(target, 0, 180, low_value, high_value);
+  }
 
-  }
-  leitura = analogRead(A0);
-  leitura = leitura*0.2 + leituraa*0.8;
+  // Makes new measurement and updates estimate
+  measure = analogRead(A0);
+  estimate = measure*filter_k + prev_estimate*(1 - filter_k);
+  int dInput = estimate - prev_estimate;
+  prev_estimate = estimate;
   
-  leituraa = leitura;
-  
-  erro = leitura - setpoint;
-  soma_erro += erro;
+  error = estimate - target;
+  error_sum += error;
 
-  if (abs(erro) < 5)
-  {
-    digitalWrite(3, HIGH);
-    digitalWrite(4, HIGH);
-  }
-  else if (erro > 0)
-  {
-    digitalWrite(3, HIGH);
-    digitalWrite(4, LOW);
-  }
-  else
-  {
-    digitalWrite(3, LOW);
-    digitalWrite(4, HIGH);
+  command = abs(error*K.p + error_sum*K.i - dInput*K.d);
+  
+  if (abs(command) < 3) {  // Hysterisis
+    digitalWrite(pin_a, HIGH);
+    digitalWrite(pin_b, HIGH);
+  } else if (command > 0) {
+    digitalWrite(pin_a, HIGH);
+    digitalWrite(pin_b, LOW);
+  } else {
+    digitalWrite(pin_a, LOW);
+    digitalWrite(pin_b, HIGH);
   }
   
-  forca = abs(erro*Kp + soma_erro*Ki);
-  analogWrite(PWMA, forca);
-//  if (erro < (1 << 5)){
-//    analogWrite(PWMA, erro << 3);
-//  }
-//  else
-//  {
-//    digitalWrite(PWMA, HIGH);
-//  }
-  Serial.print(0);
-  Serial.print(", ");
-  Serial.print(180);
-  Serial.print(", ");
-  Serial.println((float) leitura * 180 / 1023);
-//  Serial.print(" ");
-//  Serial.println(setpoint);
+  analogWrite(PWMA, command);
+
+  now = millis();
+  if (now - last_update > 50) {  // F_update =< 20 Hz
+    last_update = now;
+    Serial.write(map(estimate, low_value, high_value, 0, 180));
+  }
+  // F_inicial 64 Hz
 }

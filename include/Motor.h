@@ -14,6 +14,7 @@ public:
         pinMode(in1_pin, OUTPUT);
         pinMode(in2_pin, OUTPUT);
         pinMode(pwm_pin, OUTPUT);
+        in1_pin = in1_pin;
     }
     ~Motor() {}
 };
