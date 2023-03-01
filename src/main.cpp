@@ -1,9 +1,10 @@
 #include <Arduino.h>
+#include "Motor.h"
 
-#define STBY 2
-#define PWMA 5
+Motor motores[3] = {(3, 4, 5)};
 
-const uint8_t pin_a = 3, pin_b = 4;
+void show_options();
+void run();
 
 int target = 512;
 int measure, estimate, prev_estimate = 512;
@@ -21,54 +22,79 @@ const float filter_k = 0.8;
 unsigned long now, last_update = 0;
 
 void setup() {
-
   Serial.begin(9600);
-
-  // Set up the H-bridge pins 
-  pinMode(STBY, OUTPUT);
-  pinMode(pin_a, OUTPUT);
-  pinMode(pin_b, OUTPUT);
-  pinMode(PWMA, OUTPUT);
-
-  digitalWrite(STBY, HIGH);
+  show_options();
 }
 
-void loop()
+void loop() {
+  // Waits for input
+  while (!Serial.available()) continue;
+
+  switch (Serial.read())
+  {
+  case 'P':
+    K.p = Serial.parseFloat();
+    break;
+  
+  case 'I':
+    K.i = Serial.parseFloat();
+    break;
+
+  case 'D':
+    K.d = Serial.parseFloat();
+    break;
+  
+  case 'r':
+    delay(2);
+    while (Serial.available()) Serial.read();
+    run();
+    break;
+
+  default:
+    break;
+  }
+  show_options();
+}
+
+void run()
 {
-  // Receives new target
-  while (Serial.available()) {
-    Serial.readBytes((char *) &target, 2);
-    target = map(target, 0, 180, low_value, high_value);
-  }
+  while (true)
+  {
+    
+    // Receives new target
+    if (Serial.available()) {
+      Serial.readBytes((char *) &target, 2);
+      target = map(target, 0, 180, low_value, high_value);
+      Serial.println("Target: " + String(target));
+    }
 
-  // Makes new measurement and updates estimate
-  measure = analogRead(A0);
-  estimate = measure*filter_k + prev_estimate*(1 - filter_k);
-  int dInput = estimate - prev_estimate;
-  prev_estimate = estimate;
-  
-  error = estimate - target;
-  error_sum += error;
+    // Makes new measurement and updates estimate
+    measure = analogRead(A0);
+    estimate = measure*filter_k + prev_estimate*(1 - filter_k);
+    int dInput = estimate - prev_estimate;
+    prev_estimate = estimate;
+    
+    error = estimate - target;
+    error_sum += error;
 
-  command = abs(error*K.p + error_sum*K.i - dInput*K.d);
-  
-  if (abs(command) < 3) {  // Hysterisis
-    digitalWrite(pin_a, HIGH);
-    digitalWrite(pin_b, HIGH);
-  } else if (command > 0) {
-    digitalWrite(pin_a, HIGH);
-    digitalWrite(pin_b, LOW);
-  } else {
-    digitalWrite(pin_a, LOW);
-    digitalWrite(pin_b, HIGH);
-  }
-  
-  analogWrite(PWMA, command);
+    command = error*K.p + error_sum*K.i - dInput*K.d;
 
-  now = millis();
-  if (now - last_update > 50) {  // F_update =< 20 Hz
-    last_update = now;
-    Serial.write(map(estimate, low_value, high_value, 0, 180));
+    motor.accelerate(command);
+
+    now = millis();
+    if (now - last_update > 50) {  // F_update =< 20 Hz
+      last_update = now;
+      Serial.println(map(estimate, low_value, high_value, 0, 180));
+    }
+    // F_inicial 64 Hz
   }
-  // F_inicial 64 Hz
+}
+
+void show_options() {
+  Serial.println("---------------------------------------------");
+  Serial.println("P: " + String(K.p, 3));
+  Serial.println("I: " + String(K.i, 3));
+  Serial.println("D: " + String(K.d, 3));
+  Serial.println("r -> RUN");
+  Serial.println("---------------------------------------------"); 
 }
