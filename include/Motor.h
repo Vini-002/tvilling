@@ -12,6 +12,7 @@ private:
 public:
     int speed;
     uint8_t direction = 1;
+    int target_position = 512, prev_estimate = 512;
 
     Motor(uint8_t pin_a, uint8_t pin_b, uint8_t pwm_pin)
     {
@@ -26,8 +27,8 @@ public:
       _pwm_pin = pwm_pin;
     }
     void accelerate(int target);
+    void set_target(int target);
 };
-
 
 void Motor::accelerate(int target)
 {
@@ -52,4 +53,8 @@ void Motor::accelerate(int target)
         digitalWrite(_pin_b, HIGH);
         direction = 0;
     }
+}
+
+void Motor::set_target(int target) {
+    target_position = map(target, 0, 180, low_value, high_value);
 }

@@ -1,13 +1,14 @@
 #include <Arduino.h>
 #include "Motor.h"
 
-Motor motores[3] = {(3, 4, 5)};
 
+Motor motor[] = {{3, 4, 5},{6, 7, 8},{9, 10, 11}};
+int AnaloRead[]= {A0,A1,A2};
 void show_options();
 void run();
 
-int target = 512;
-int measure, estimate, prev_estimate = 512;
+char* buffer;
+int measure, estimate;
 
 int error, error_sum = 0, command;
 
@@ -46,8 +47,8 @@ void loop() {
   
   case 'r':
     delay(2);
-    while (Serial.available()) Serial.read();
-    run();
+      while (Serial.available()) Serial.read();
+      run();
     break;
 
   default:
@@ -59,34 +60,40 @@ void loop() {
 void run()
 {
   while (true)
-  {
-    
-    // Receives new target
-    if (Serial.available()) {
-      Serial.readBytes((char *) &target, 2);
-      target = map(target, 0, 180, low_value, high_value);
-      Serial.println("Target: " + String(target));
-    }
+   {
+    for (size_t i = 0; i < 3; i++)
+    {
+      // Receives new target
+      if (Serial.available()) {
+        // Serial.readBytes((char *) &target, 2);
+        Serial.readBytes(buffer, 2);
+        if (buffer[0] == 's') break;
+        
+        char option = buffer[0] - 'a';
+        motor[option].set_target(buffer[1]);
+        Serial.println("Target " + String(buffer[0]) + ": " + String(motor[option].target_position));
+      }
 
-    // Makes new measurement and updates estimate
-    measure = analogRead(A0);
-    estimate = measure*filter_k + prev_estimate*(1 - filter_k);
-    int dInput = estimate - prev_estimate;
-    prev_estimate = estimate;
-    
-    error = estimate - target;
-    error_sum += error;
+      // Makes new measurement and updates estimate
+      measure = analogRead(AnaloRead[i]);
+      estimate = measure*filter_k + motor[i].prev_estimate*(1 - filter_k);
+      int dInput = estimate - motor[i].prev_estimate;
+      motor[i].prev_estimate = estimate;
+      
+      error = estimate - motor[i].target_position;
+      error_sum += error;
 
-    command = error*K.p + error_sum*K.i - dInput*K.d;
+      command = error*K.p + error_sum*K.i - dInput*K.d;
+      
+      motor[i].accelerate(command);
 
-    motor.accelerate(command);
-
-    now = millis();
-    if (now - last_update > 50) {  // F_update =< 20 Hz
-      last_update = now;
-      Serial.println(map(estimate, low_value, high_value, 0, 180));
-    }
-    // F_inicial 64 Hz
+      now = millis();
+      if (now - last_update > 50) {  // F_update =< 20 Hz
+        last_update = now;
+        Serial.println(map(estimate, low_value, high_value, 0, 180));
+      }
+      // F_inicial 64 Hz
+   }
   }
 }
 
