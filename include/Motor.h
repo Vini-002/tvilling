@@ -58,9 +58,10 @@ void Motor::accelerate(int target)
 {
     // Already on target speed
     if (speed == target) return;
+    speed = target;
 
     // Applies PWM
-    uint8_t pwm_signal = (uint8_t) min(abs(target), 255);
+    uint8_t pwm_signal = (uint8_t) min(abs(speed), 255);
     analogWrite(_pwm_pin, pwm_signal);
 
     // Already on target direction
