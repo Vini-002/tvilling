@@ -12,6 +12,11 @@ unsigned long last_update = 0;
 
 void setup() {
   Serial.begin(9600);
+  // wait for other side
+  while (!Serial.available()) continue;
+  // Throw away whatever came
+  while (Serial.available()) Serial.read();
+  Serial.println("A, B, C");
 }
 
 void loop() {
