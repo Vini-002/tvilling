@@ -11,27 +11,56 @@ from serial import SerialException
 import numpy as np
 import pandas as pd
 
+LIST_PORTS = "python -m serial.tools.list_ports -q"
 
-# arduino = serial.Serial('/dev/ttyUSB0')
+# get used port:
+with subprocess.Popen(LIST_PORTS, shell=True, stdout=subprocess.PIPE) as proc:
+    # this could be a list of active ports
+    OUTPUT = proc.communicate()[0].decode("utf-8").split(os.linesep)
 
-"""
+active_ports = [x.strip() for x in OUTPUT if x]
+
+# display port selection
+port = st.sidebar.selectbox(
+    'Select Port',
+    active_ports
+)
+
+baudrate = st.sidebar.selectbox(
+    'Select Baudrade',
+    (4800, 9600, 19200, 38400, 57600, 115200),
+    index=1
+)
+
+if not active_ports:
+    st.warning("No serial devices connected")
+else:
+    # initialize serial
+    ser = serial.Serial(port, baudrate)
+    try:
+        ser.open()
+    except SerialException as e:
+        st.error(f"could not open port {port}. Unplug and try again")
+        st.error(e)
+
+st.write("""
 # Tvilling
 ---
 ## PID Tuning
-"""
+""")
 
 cols = st.columns(3)
-cols[0].number_input("P", value=1., step=0.05)
-cols[1].number_input("I", value=0., step=0.05)
-cols[2].number_input("D", value=0., step=0.05)
+p = cols[0].number_input("P", value=1., step=0.05)
+i = cols[1].number_input("I", value=0., step=0.05)
+d = cols[2].number_input("D", value=0., step=0.05)
 
 if st.button("RUN"):
-    pass
+    ser.print(f"P{p}I{i}D{d}r")
 
-"""
+st.write("""
 ---
 ## Position tracking
-"""
+""")
 
 st.slider("Target position", 0, 180, 90)
 st.button("Go to position")
@@ -86,7 +115,7 @@ selected_port = st.sidebar.selectbox(
     active_ports,
     index=0)
 
-selected_baudrate = st.sidebar.selectbox(
+baudrate = st.sidebar.selectbox(
     'Select Baudrade',
     (4800, 9600, 19200, 38400, 57600, 115200),
     index=1
@@ -94,7 +123,7 @@ selected_baudrate = st.sidebar.selectbox(
 
 # initialize serial
 ser = serial.Serial()
-ser.baudrate = selected_baudrate
+ser.baudrate = baudrate
 ser.port = selected_port
 try:
     ser.open()

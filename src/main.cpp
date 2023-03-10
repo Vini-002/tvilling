@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include "Motor.h"
 
-
 Motor motor[] = {{3, 4, 5},{6, 7, 8},{9, 10, 11}};
 int AnaloRead[]= {A0,A1,A2};
 void show_options();
