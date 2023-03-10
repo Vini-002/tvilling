@@ -11,6 +11,9 @@ void receive_target();
 unsigned long last_update = 0;
 
 void setup() {
+
+  motor[1].calibration = {67, 893};
+
   Serial.begin(9600);
   // wait for other side
   while (!Serial.available()) continue;
@@ -20,7 +23,7 @@ void setup() {
 }
 
 void loop() {
-  receive_target();
+  // receive_target();
   
   for (size_t i = 0; i < 3; i++) {
     motor[i].control();
@@ -34,6 +37,7 @@ void loop() {
 }
 
 void receive_target() {
+  // Implementation not finished
   if (!Serial.available()) return;
   char buffer[2];
   Serial.readBytes(buffer, 2);

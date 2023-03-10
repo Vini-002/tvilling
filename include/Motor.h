@@ -17,7 +17,7 @@ public:
     
     struct Position {int estimate, prev_estimate, target;} position = {512, 512, 512};
 
-    struct Calibration {int low_value, high_value;} calibration = {67, 893};
+    struct Calibration {int low_value, high_value;} calibration = {0, 1023};
     
     struct Controller {float p, i, d;} K = {1, 0, 0};
     
