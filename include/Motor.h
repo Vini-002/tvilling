@@ -49,7 +49,7 @@ void Motor::control()
     int error = position.estimate - position.target;
     error_sum += error;
 
-    command = error*K.p + error_sum*K.i - dInput*K.d;
+    int command = error*K.p + error_sum*K.i - dInput*K.d;
 
     accelerate(command);
 }
