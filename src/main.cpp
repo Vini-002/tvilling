@@ -11,10 +11,12 @@ void receive_target();
 unsigned long last_update = 0;
 
 void setup() {
-
-  motor[1].calibration = {67, 893};
+  TCCR2B = (TCCR2B | 1) & ~B110;
+  TCCR1B = (TCCR1B | 1) & ~B110;
+  // motor[1].calibration = {67, 893};
 
   Serial.begin(9600);
+  Serial.setTimeout(60);
   // wait for other side
   while (!Serial.available()) continue;
   // Throw away whatever came
@@ -23,7 +25,7 @@ void setup() {
 }
 
 void loop() {
-  // receive_target();
+  receive_target();
   
   for (size_t i = 0; i < 3; i++) {
     motor[i].control();
@@ -39,10 +41,6 @@ void loop() {
 void receive_target() {
   // Implementation not finished
   if (!Serial.available()) return;
-  char buffer[2];
-  Serial.readBytes(buffer, 2);
-  
-  int option = buffer[0] - 'a';
-  motor[option].set_target(buffer[1]);
-  Serial.println("Target " + String(buffer[0]) + ": " + String(motor[option].position.target));
+  int option = Serial.read() - 'A';
+  motor[option].set_target(Serial.parseInt());
 }
