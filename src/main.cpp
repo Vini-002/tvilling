@@ -4,15 +4,15 @@
 #define UPDATE_FREQ 20
 #define UPDATE_INTERVAL_ms (1000 / UPDATE_FREQ)
 
-Motor motor[] = {{5, 4, 3, A0}, {8, 7, 9, A1}, {12, 11, 10, A2}};
+Motor motor[] = {{22, 1, 23, 36}, {3, 21, 19, 39}, {5, 17, 18, 34}};
 
 void receive_target();
 
 unsigned long last_update = 0;
 
 void setup() {
-  TCCR2B = (TCCR2B | 1) & ~B110;
-  TCCR1B = (TCCR1B | 1) & ~B110;
+  // TCCR2B = (TCCR2B | 1) & ~B110;
+  // TCCR1B = (TCCR1B | 1) & ~B110;
   // motor[1].calibration = {67, 893};
 
   Serial.begin(9600);
