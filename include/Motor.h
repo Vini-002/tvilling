@@ -26,6 +26,9 @@ public:
       pinMode(pin_a, OUTPUT);
       pinMode(pin_b, OUTPUT);
       pinMode(pwm_pin, OUTPUT);
+      digitalWrite(pin_a, HIGH);
+      digitalWrite(pin_b, LOW);
+      digitalWrite(pwm_pin, LOW);
       _pin_a = pin_a;
       _pin_b = pin_b;
       _pwm_pin = pwm_pin;
