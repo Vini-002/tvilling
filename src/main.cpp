@@ -4,7 +4,7 @@
 #define UPDATE_FREQ 20
 #define UPDATE_INTERVAL_ms (1000 / UPDATE_FREQ)
 
-Motor motor[] = {{22, 1, 23, 36}, {3, 21, 19, 39}, {5, 17, 18, 34}};
+Motor motor[] = {{17, 5, 18, 34}, {4, 16, 2, 35}, {15, 15, 15, 36}};
 
 void receive_target();
 
@@ -15,8 +15,8 @@ void setup() {
   // TCCR1B = (TCCR1B | 1) & ~B110;
   // motor[1].calibration = {67, 893};
 
-  Serial.begin(9600);
-  Serial.setTimeout(60);
+  Serial.begin(115200);
+  Serial.setTimeout(10);
   // wait for other side
   while (!Serial.available()) continue;
   // Throw away whatever came
