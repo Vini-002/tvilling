@@ -19,13 +19,16 @@ public:
 
     struct Calibration {int low_value, high_value;} calibration = {0, 1023};
     
-    struct Controller {float p, i, d;} K = {1, 0, 0};
+    struct Controller {float p, i, d;} K = {5, 0, 0};
     
     Motor(uint8_t pin_a, uint8_t pin_b, uint8_t pwm_pin, uint8_t analog_pin)
     {
       pinMode(pin_a, OUTPUT);
       pinMode(pin_b, OUTPUT);
       pinMode(pwm_pin, OUTPUT);
+      digitalWrite(pin_a, HIGH);
+      digitalWrite(pin_b, LOW);
+      digitalWrite(pwm_pin, LOW);
       _pin_a = pin_a;
       _pin_b = pin_b;
       _pwm_pin = pwm_pin;
@@ -62,7 +65,7 @@ void Motor::accelerate(int target)
     speed = target;
 
     // Applies PWM
-    uint8_t pwm_signal = (uint8_t) min(abs(speed), 255);
+    int pwm_signal = min(abs(speed), 1023);
     analogWrite(_pwm_pin, pwm_signal);
 
     // Already on target direction
@@ -80,9 +83,11 @@ void Motor::accelerate(int target)
 }
 
 void Motor::set_target(int target) {
-    position.target = map(target, 0, 180, calibration.low_value, calibration.high_value);
+    position.target = target;
+    // position.target = map(target, 0, 180, calibration.low_value, calibration.high_value);
 }
 
 String Motor::get_position() {
-    return String(map(position.estimate, calibration.low_value, calibration.high_value, 0, 180));
+    return String(position.estimate);
+    // return String(map(position.estimate, calibration.low_value, calibration.high_value, 0, 180));
 }
