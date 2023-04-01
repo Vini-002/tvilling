@@ -1,6 +1,8 @@
 #pragma once
 #include <Arduino.h>
 
+#define MAX_INTEGRAL 512
+
 class Motor
 {
 private:
@@ -52,6 +54,7 @@ void Motor::control()
 
     int error = position.estimate - position.target;
     error_sum += error;
+    error_sum = constrain(error_sum, -MAX_INTEGRAL, MAX_INTEGRAL);
 
     int command = error*K.p + error_sum*K.i - dInput*K.d;
 
