@@ -30,6 +30,7 @@ public:
       _pin_b = pin_b;
       _pwm_pin = pwm_pin;
       _analog_pin = analog_pin;
+      position.target = analogRead(_analog_pin); // Updates target to initial position
     }
 
     void control();
