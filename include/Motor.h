@@ -14,8 +14,10 @@ private:
 public:
     int speed;
     uint8_t direction = 1;
+    struct Filter {float alpha, beta;} filter = {0.4, 0.7};
     const float filter_k = 0.8;
     int error_sum = 0;
+    int manual_mode = 0;
     
     struct Position {int estimate, prev_estimate, target;} position = {512, 512, 512};
 
@@ -46,6 +48,7 @@ public:
 
 void Motor::control()
 {
+    if (manual_mode) return;
     // Makes new measurement and updates estimate
     int measured_position = analogRead(_analog_pin);
     position.estimate = measured_position*filter_k + position.prev_estimate*(1 - filter_k);
