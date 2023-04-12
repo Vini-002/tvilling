@@ -14,9 +14,13 @@ private:
 public:
     int speed;
     uint8_t direction = 1;
-    const float filter_k = 0.8;
+    const float filter_k = 0.05;
     int error_sum = 0;
     
+    #define N 5
+    int ring_buffer[N];
+    int ring_index = 0;
+    int median;
     struct Position {int estimate, prev_estimate, target;} position = {512, 512, 512};
 
     struct Calibration {int low_value, high_value;} calibration = {0, 1023};
@@ -36,12 +40,16 @@ public:
       _pwm_pin = pwm_pin;
       _analog_pin = analog_pin;
       position.target = analogRead(_analog_pin); // Updates target to initial position
+      for (int i = 0; i < N; i++) {
+        ring_buffer[i] = 0;
+      }
     }
 
     void control();
     void accelerate(int target);
     void set_target(int target);
     String get_position();
+    int filter(int new_value);
 };
 
 void Motor::control()
@@ -83,6 +91,31 @@ void Motor::accelerate(int target)
         digitalWrite(_pin_b, HIGH);
         direction = 0;
     }
+}
+
+
+int Motor::filter(int new_value) {
+    // Insert new value into ring buffer (overwrite oldest value)
+    ring_buffer[ring_index] = new_value;
+    ring_index = (ring_index + 1) % N;
+
+    // Copy elements to be sorted
+    int sorted[N];
+    for (int i = 0; i < N; i++) {
+        sorted[i] = ring_buffer[i];
+    }
+
+    // Implementation of Insertion sort algorithm
+    for (int i = 1; i < N; i++) {
+        int j = i;
+        while (j > 0 && sorted[j-1] > sorted[j] ) {
+            int temp = sorted[j];
+            sorted[j] = sorted[j-1];
+            sorted[j-1] = temp;
+            j--;
+        }
+    }
+    return sorted[N/2];
 }
 
 void Motor::set_target(int target) {
