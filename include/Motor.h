@@ -16,11 +16,12 @@ public:
     uint8_t direction = 1;
     const float filter_k = 0.05;
     int error_sum = 0;
-    
+
     #define N 5
     int ring_buffer[N];
     int ring_index = 0;
     int median;
+    
     struct Position {int estimate, prev_estimate, target;} position = {512, 512, 512};
 
     struct Calibration {int low_value, high_value;} calibration = {0, 1023};
@@ -40,9 +41,7 @@ public:
       _pwm_pin = pwm_pin;
       _analog_pin = analog_pin;
       position.target = analogRead(_analog_pin); // Updates target to initial position
-      for (int i = 0; i < N; i++) {
-        ring_buffer[i] = 0;
-      }
+      for (int i = 0; i < N; i++) ring_buffer[i] = 0;
     }
 
     void control();
@@ -92,7 +91,6 @@ void Motor::accelerate(int target)
         direction = 0;
     }
 }
-
 
 int Motor::filter(int new_value) {
     // Insert new value into ring buffer (overwrite oldest value)

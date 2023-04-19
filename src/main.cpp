@@ -11,9 +11,6 @@ void receive_target();
 unsigned long last_update = 0;
 
 void setup() {
-  // TCCR2B = (TCCR2B | 1) & ~B110;
-  // TCCR1B = (TCCR1B | 1) & ~B110;
-  // motor[1].calibration = {67, 893};
 
   Serial.begin(115200);
   Serial.setTimeout(10);
