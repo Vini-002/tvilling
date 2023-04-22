@@ -22,9 +22,11 @@ public:
     int ring_index = 0;
     int median;
     
-    struct Position {int estimate, prev_estimate, target;} position = {512, 512, 512};
+    struct Target {int current, end, increment, i;} target;
 
     struct Calibration {int low_value, high_value;} calibration = {0, 1023};
+
+    int previous_position = 0;
     
     struct Controller {float p, i, d;} K = {5, 0, 0};
     
@@ -40,8 +42,9 @@ public:
       _pin_b = pin_b;
       _pwm_pin = pwm_pin;
       _analog_pin = analog_pin;
-      position.target = analogRead(_analog_pin); // Updates target to initial position
+      target.end = target.current = analogRead(_analog_pin); // Updates target to initial position
       for (int i = 0; i < N; i++) ring_buffer[i] = 0;
+      target.i = 0;
     }
 
     void control();
@@ -55,11 +58,22 @@ void Motor::control()
 {
     // Makes new measurement and updates estimate
     int measured_position = analogRead(_analog_pin);
-    position.estimate = measured_position*filter_k + position.prev_estimate*(1 - filter_k);
-    int dInput = position.estimate - position.prev_estimate;
-    position.prev_estimate = position.estimate;
+    int position = filter(measured_position);
+    int dInput = position - previous_position;
+    previous_position = position;
 
-    int error = position.estimate - position.target;
+    // Ramp target (linear interpolation)
+    target.i ++;
+    if (target.i == 10) {
+        if (target.current < target.end) {
+            target.current = min(target.end, target.current + target.increment);
+        } else {
+            target.current = max(target.end, target.current - target.increment);
+        }
+        target.i = 0;
+    }
+
+    int error = position - target.current;
     error_sum += error;
     error_sum = constrain(error_sum, -MAX_INTEGRAL, MAX_INTEGRAL);
 
@@ -92,6 +106,7 @@ void Motor::accelerate(int target)
     }
 }
 
+// Implementation of median filter
 int Motor::filter(int new_value) {
     // Insert new value into ring buffer (overwrite oldest value)
     ring_buffer[ring_index] = new_value;
@@ -116,12 +131,12 @@ int Motor::filter(int new_value) {
     return sorted[N/2];
 }
 
-void Motor::set_target(int target) {
-    position.target = target;
+void Motor::set_target(int new_target) {
+    target.current = new_target;
     // position.target = map(target, 0, 180, calibration.low_value, calibration.high_value);
 }
 
 String Motor::get_position() {
-    return String(position.estimate);
+    return String(previous_position);
     // return String(map(position.estimate, calibration.low_value, calibration.high_value, 0, 180));
 }
