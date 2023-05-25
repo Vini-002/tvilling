@@ -1,12 +1,15 @@
 #include <Arduino.h>
 #include "Motor.h"
+#include "Blink.h"
+#include "pinout.h"
 
 #define UPDATE_FREQ 20
 #define UPDATE_INTERVAL_ms (1000 / UPDATE_FREQ)
 
-Motor motor[] = {{17, 5, 18, 34}, {4, 16, 2, 35}, {15, 15, 15, 36}};
+Motor motor[] = {{17, 5, 18, 34}, {16, 4, 2, 35}, {26, 21, 19, 36}};
 
 void receive_target();
+
 
 unsigned long last_update = 0;
 
@@ -14,8 +17,12 @@ void setup() {
 
   Serial.begin(115200);
   Serial.setTimeout(10);
+  Blink::setup();
   // wait for other side
-  while (!Serial.available()) continue;
+  while (!Serial.available()) {
+    Blink::update(500);
+  };
+  pinMode(2, HIGH);
   // Throw away whatever came
   while (Serial.available()) Serial.read();
   Serial.println("A, B, C");
