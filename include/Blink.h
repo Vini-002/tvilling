@@ -1,20 +1,25 @@
 #pragma once
 #include <Arduino.h>
+#include "pinout.h"
 
 namespace Blink {
 
   unsigned long last_blink;
 
   void setup() {
-    pinMode(2, OUTPUT);
+    pinMode(STATUS_LED, OUTPUT);
     last_blink = millis();
   }
 
-  void update(int period_ms) {
+  void interval_ms(int period_ms) {
     unsigned long now = millis();
     if (now - last_blink > period_ms) {
-      digitalWrite(2, !digitalRead(2));
+      digitalWrite(STATUS_LED, !digitalRead(STATUS_LED));
       last_blink = now;
     }
+  }
+
+  void on() {
+    pinMode(STATUS_LED, HIGH);
   }
 }
